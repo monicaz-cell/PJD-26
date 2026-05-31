@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Validasi Rekam Medis — JivaCare Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --teal:          #1aaa96;
+    --teal-dark:     #138f7d;
+    --teal-hover:    #0e7a6b;
+    --teal-light:    #e6f7f5;
+    --teal-mid:      #a8ddd8;
+    --sidebar-bg:    #ffffff;
+    --sidebar-w:     220px;
+    --topbar-h:      56px;
+    --bg:            #f0f2f5;
+    --white:         #ffffff;
+    --border:        #e2e8f0;
+    --text:          #1a202c;
+    --muted:         #718096;
+    --light:         #a0aec0;
+    --red:           #e53e3e;
+    --red-bg:        #fff5f5;
+    --red-border:    #feb2b2;
+    --yellow:        #d69e2e;
+    --yellow-bg:     #fffff0;
+    --yellow-border: #f6e05e;
+    --green:         #276749;
+    --green-bg:      #f0fff4;
+    --green-border:  #9ae6b4;
+    --blue:          #2b6cb0;
+    --blue-bg:       #ebf8ff;
+    --blue-border:   #90cdf4;
+    --radius:        8px;
+    --shadow-sm:     0 1px 3px rgba(0,0,0,.08);
+    --shadow:        0 4px 12px rgba(0,0,0,.1);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .topbar {
+    height: var(--topbar-h);
+    background: var(--teal);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+    box-shadow: 0 2px 6px rgba(0,0,0,.15);
+  }
+  .topbar-brand { font-size: 1.18rem; font-weight: 800; color: #fff; letter-spacing: -.2px; }
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+  .topbar-icon-btn {
+    width: 34px; height: 34px; border-radius: 6px;
+    background: rgba(255,255,255,.18); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 1rem; transition: background .2s;
+  }
+  .topbar-icon-btn:hover { background: rgba(255,255,255,.28); }
+
+  .layout { display: flex; margin-top: var(--topbar-h); min-height: calc(100vh - var(--topbar-h)); }
+
+  .sidebar {
+    width: var(--sidebar-w); background: var(--white);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    position: fixed; top: var(--topbar-h); bottom: 0; left: 0;
+    z-index: 100; overflow-y: auto;
+  }
+  .sidebar-section { padding: 14px 12px 6px; }
+  .sidebar-label { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--light); padding: 0 8px; margin-bottom: 4px; }
+  .sidebar-item {
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 10px; border-radius: 6px;
+    font-size: .82rem; font-weight: 500; color: var(--muted);
+    cursor: pointer; text-decoration: none;
+    transition: background .15s, color .15s;
+    margin-bottom: 1px;
+  }
+  .sidebar-item:hover { background: var(--teal-light); color: var(--teal-dark); }
+  .sidebar-item.active { background: var(--teal-light); color: var(--teal); font-weight: 700; }
+  .sidebar-item .icon { font-size: .95rem; width: 18px; text-align: center; flex-shrink: 0; }
+  .sidebar-divider { height: 1px; background: var(--border); margin: 8px 12px; }
+
+  .content { margin-left: var(--sidebar-w); flex: 1; padding: 24px; min-height: calc(100vh - var(--topbar-h)); }
+
+  .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: .78rem; color: var(--muted); margin-bottom: 16px; }
+  .breadcrumb a { color: var(--teal); text-decoration: none; font-weight: 600; }
+  .breadcrumb-sep { color: var(--light); }
+
+  .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+  .page-title  { font-size: 1.18rem; font-weight: 800; color: var(--text); }
+  .page-sub    { font-size: .8rem; color: var(--muted); margin-top: 3px; }
+
+  /* AI Badge */
+  .ai-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff; border-radius: 99px;
+    padding: 4px 12px; font-size: .74rem; font-weight: 700;
+    box-shadow: 0 2px 8px rgba(102,126,234,.4);
+  }
+  .ai-badge-dot { width: 6px; height: 6px; background: #a0f0c0; border-radius: 50%; animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(.8)} }
+
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .stat-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px 16px;
+    box-shadow: var(--shadow-sm);
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .stat-card-top { display: flex; align-items: center; justify-content: space-between; }
+  .stat-card-label { font-size: .72rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .3px; }
+  .stat-card-icon { font-size: 1.1rem; }
+  .stat-card-val { font-size: 1.65rem; font-weight: 800; color: var(--text); font-family: 'DM Mono', monospace; line-height: 1; }
+  .stat-card-sub { font-size: .72rem; color: var(--light); }
+  .stat-card.green .stat-card-val { color: #276749; }
+  .stat-card.red   .stat-card-val { color: #c53030; }
+  .stat-card.yellow .stat-card-val{ color: #b7791f; }
+
+  .panel {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow-sm);
+    margin-bottom: 16px; overflow: hidden;
+  }
+  .panel-header {
+    padding: 13px 18px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+    background: var(--white);
+  }
+  .panel-header-title { font-size: .88rem; font-weight: 700; color: var(--text); }
+  .panel-header-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .panel-body { padding: 18px; }
+  .panel-body-flush { padding: 0; }
+
+  .upload-zone {
+    border: 2px dashed var(--teal-mid); border-radius: var(--radius);
+    background: var(--teal-light); padding: 28px 20px;
+    text-align: center; cursor: pointer; position: relative;
+    transition: border-color .2s, background .2s;
+  }
+  .upload-zone:hover, .upload-zone.drag-over { border-color: var(--teal); background: #cdf0ea; }
+  .upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .upload-icon  { font-size: 2rem; margin-bottom: 6px; }
+  .upload-title { font-size: .88rem; font-weight: 700; color: var(--teal-dark); margin-bottom: 3px; }
+  .upload-hint  { font-size: .76rem; color: var(--muted); }
+  .upload-hint strong { color: var(--teal); }
+
+  .form-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-top: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
+  .form-label { font-size: .74rem; font-weight: 600; color: var(--muted); }
+  input[type=text] {
+    background: var(--white); border: 1px solid var(--border); color: var(--text);
+    border-radius: 6px; padding: 7px 11px; font-size: .82rem; font-family: 'Inter', sans-serif;
+    outline: none; transition: border-color .18s, box-shadow .18s;
+  }
+  input[type=text]:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(26,170,150,.12); }
+
+  .btn {
+    padding: 8px 18px; border-radius: 6px; font-size: .82rem; font-weight: 600;
+    cursor: pointer; font-family: 'Inter', sans-serif; border: 1px solid transparent;
+    display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
+    transition: background .15s, box-shadow .15s;
+  }
+  .btn:disabled { opacity: .55; cursor: not-allowed; }
+  .btn-primary { background: var(--teal); color: #fff; border-color: var(--teal-dark); }
+  .btn-primary:hover:not(:disabled) { background: var(--teal-dark); box-shadow: 0 3px 10px rgba(26,170,150,.3); }
+  .btn-ai {
+    background: linear-gradient(135deg, #667eea, #764ba2); color: #fff;
+    border: none; box-shadow: 0 2px 8px rgba(102,126,234,.35);
+  }
+  .btn-ai:hover:not(:disabled) { filter: brightness(1.1); box-shadow: 0 4px 14px rgba(102,126,234,.5); }
+  .btn-ghost { background: var(--white); color: var(--muted); border-color: var(--border); }
+  .btn-ghost:hover:not(:disabled) { color: var(--text); border-color: var(--muted); }
+
+  .progress-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+  .progress-label { font-size: .74rem; font-weight: 600; color: var(--muted); white-space: nowrap; }
+  .progress-bar { flex: 1; height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--teal), #38a169); transition: width .45s ease; width: 0%; }
+  .progress-pct { font-size: .74rem; font-weight: 700; font-family: 'DM Mono', monospace; color: var(--teal); min-width: 32px; text-align: right; }
+
+  /* ─── API KEY PANEL ─── */
+  .apikey-panel {
+    background: linear-gradient(135deg, #ebf8ff, #e9d8fd);
+    border: 1px solid #c3dafe; border-radius: var(--radius);
+    padding: 14px 16px; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .apikey-icon { font-size: 1.4rem; flex-shrink: 0; }
+  .apikey-info { flex: 1; min-width: 180px; }
+  .apikey-title { font-size: .84rem; font-weight: 700; color: #2d3748; }
+  .apikey-desc  { font-size: .72rem; color: var(--muted); margin-top: 2px; }
+  .apikey-input-wrap { display: flex; gap: 6px; align-items: center; }
+  .apikey-input {
+    background: var(--white); border: 1px solid #c3dafe; border-radius: 6px;
+    padding: 7px 11px; font-size: .78rem; font-family: 'DM Mono', monospace;
+    width: 260px; outline: none; color: var(--text);
+    transition: border-color .18s, box-shadow .18s;
+  }
+  .apikey-input:focus { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,.15); }
+  .apikey-status { font-size: .72rem; font-weight: 700; padding: 3px 9px; border-radius: 99px; white-space: nowrap; }
+  .apikey-status.ok  { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+  .apikey-status.err { background: var(--red-bg);   color: #c53030;      border: 1px solid var(--red-border); }
+
+  /* ─── BERKAS GRID ─── */
+  .berkas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+
+  .berkas-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px 16px;
+    display: flex; flex-direction: column; gap: 8px;
+    position: relative; overflow: hidden;
+    transition: box-shadow .2s, transform .15s;
+    cursor: default;
+  }
+  .berkas-card::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: var(--border); transition: background .2s;
+  }
+  .berkas-card:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
+  .berkas-card.status-red    { border-color: var(--red-border);    background: var(--red-bg); }
+  .berkas-card.status-red::before    { background: var(--red); }
+  .berkas-card.status-yellow { border-color: var(--yellow-border); background: var(--yellow-bg); }
+  .berkas-card.status-yellow::before { background: var(--yellow); }
+  .berkas-card.status-green  { border-color: var(--green-border);  background: var(--green-bg); }
+  .berkas-card.status-green::before  { background: #38a169; }
+  .berkas-card.status-analyzing { border-color: var(--blue-border); background: var(--blue-bg); }
+  .berkas-card.status-analyzing::before { background: var(--blue); }
+  .berkas-card.drop-target {
+    border-color: var(--teal) !important; background: var(--teal-light) !important;
+    box-shadow: 0 0 0 2px rgba(26,170,150,.25);
+  }
+
+  .berkas-row1 { display: flex; align-items: flex-start; gap: 9px; }
+  .berkas-num {
+    width: 24px; height: 24px; border-radius: 5px; flex-shrink: 0;
+    background: var(--bg); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .68rem; font-weight: 800; font-family: 'DM Mono', monospace; color: var(--muted);
+    transition: background .2s, color .2s, border-color .2s;
+  }
+  .status-red       .berkas-num { background: var(--red);    color: #fff; border-color: var(--red); }
+  .status-yellow    .berkas-num { background: var(--yellow);  color: #fff; border-color: var(--yellow); }
+  .status-green     .berkas-num { background: #38a169;        color: #fff; border-color: #38a169; }
+  .status-analyzing .berkas-num { background: var(--blue);    color: #fff; border-color: var(--blue); }
+
+  .berkas-info { flex: 1; min-width: 0; }
+  .berkas-name { font-size: .84rem; font-weight: 700; color: var(--text); line-height: 1.3; }
+  .berkas-desc { font-size: .72rem; color: var(--muted); margin-top: 1px; line-height: 1.4; }
+
+  .berkas-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 9px; border-radius: 99px; font-size: .7rem; font-weight: 700;
+    background: var(--bg); color: var(--muted); border: 1px solid var(--border);
+    width: fit-content; transition: all .2s;
+  }
+  .status-red       .berkas-badge { background: var(--red-bg);    color: #c53030; border-color: var(--red-border); }
+  .status-yellow    .berkas-badge { background: var(--yellow-bg); color: #b7791f; border-color: var(--yellow-border); }
+  .status-green     .berkas-badge { background: var(--green-bg);  color: #276749; border-color: var(--green-border); }
+  .status-analyzing .berkas-badge { background: var(--blue-bg);   color: var(--blue); border-color: var(--blue-border); }
+
+  .berkas-file {
+    font-size: .7rem; font-family: 'DM Mono', monospace; color: var(--teal);
+    display: flex; align-items: center; gap: 4px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 16px;
+  }
+  .berkas-file.empty { color: var(--light); font-family: 'Inter', sans-serif; font-style: italic; }
+
+  /* ─── AI ANALYSIS RESULT ─── */
+  .ai-result {
+    background: rgba(255,255,255,.7); border: 1px solid #e2e8f0;
+    border-radius: 6px; padding: 8px 10px; margin-top: 2px;
+    font-size: .71rem; color: var(--text); line-height: 1.5;
+    display: none;
+  }
+  .ai-result.show { display: block; }
+  .ai-result-title { font-weight: 700; color: #553c9a; font-size: .7rem; margin-bottom: 4px; display: flex; align-items: center; gap: 4px; }
+  .ai-field { display: flex; justify-content: space-between; padding: 2px 0; border-bottom: 1px solid #f0f0f0; gap: 8px; }
+  .ai-field:last-child { border-bottom: none; }
+  .ai-field-name { color: var(--muted); font-weight: 600; flex-shrink: 0; }
+  .ai-field-val { font-weight: 700; text-align: right; }
+  .ai-field-val.ok   { color: #276749; }
+  .ai-field-val.warn { color: #b7791f; }
+  .ai-field-val.miss { color: #c53030; }
+  .ai-summary { font-size: .7rem; color: var(--muted); margin-top: 5px; font-style: italic; border-top: 1px solid #eee; padding-top: 5px; }
+
+  /* analyzing spinner */
+  .spinner { display: inline-block; width: 10px; height: 10px; border: 2px solid var(--blue-border); border-top-color: var(--blue); border-radius: 50%; animation: spin .7s linear infinite; margin-right: 4px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: .72rem; font-weight: 600; color: var(--muted); }
+  .legend-dot  { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+  .dot-red    { background: var(--red); }
+  .dot-yellow { background: var(--yellow); }
+  .dot-green  { background: #38a169; }
+  .dot-blue   { background: var(--blue); }
+
+  .result-banner { display: none; border-radius: var(--radius); padding: 14px 18px; border: 1px solid; margin-bottom: 16px; }
+  .result-banner.show     { display: flex; align-items: center; gap: 12px; }
+  .result-banner.lengkap  { border-color: var(--green-border); background: var(--green-bg); }
+  .result-banner.tdk-lengkap { border-color: var(--red-border); background: var(--red-bg); }
+  .result-icon  { font-size: 1.6rem; flex-shrink: 0; }
+  .result-title { font-size: .95rem; font-weight: 800; }
+  .result-sub   { font-size: .75rem; color: var(--muted); margin-top: 2px; }
+  .lengkap    .result-title { color: #276749; }
+  .tdk-lengkap .result-title { color: #c53030; }
+
+  table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+  thead tr { background: #f7fafc; }
+  th { padding: 9px 14px; text-align: left; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); border-bottom: 2px solid var(--border); }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #f7fafc; }
+  .tbl-status { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 99px; font-size: .7rem; font-weight: 700; }
+  .tbl-status.r { background: var(--red-bg);    color: #c53030; border: 1px solid var(--red-border); }
+  .tbl-status.y { background: var(--yellow-bg); color: #b7791f; border: 1px solid var(--yellow-border); }
+  .tbl-status.g { background: var(--green-bg);  color: #276749; border: 1px solid var(--green-border); }
+  .tbl-status.b { background: var(--blue-bg);   color: var(--blue); border: 1px solid var(--blue-border); }
+  .tbl-issues { font-size: .7rem; color: #c53030; margin-top: 3px; }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+  .fade { animation: fadeUp .35s ease both; }
+
+  @media(max-width: 768px) {
+    .sidebar { display: none; }
+    .content { margin-left: 0; padding: 16px; }
+    .stats-row { grid-template-columns: repeat(2,1fr); }
+    .berkas-grid { grid-template-columns: 1fr; }
+    .form-row { flex-direction: column; align-items: stretch; }
+    .apikey-input { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-brand">JivaCare Analytics</div>
+  <div class="topbar-right">
+    <button class="topbar-icon-btn" title="Profil">👤</button>
+    <button class="topbar-icon-btn" title="Pengaturan">⚙️</button>
+    <button class="topbar-icon-btn" title="Bantuan">❓</button>
+    <button class="topbar-icon-btn" title="Notifikasi">🔔</button>
+  </div>
+</div>
+
+<div class="layout">
+
+  <aside class="sidebar">
+    <div style="padding:14px 12px 6px; font-size:.8rem; font-weight:700; color:#1a202c; border-bottom:1px solid var(--border); margin-bottom:8px;">
+      Monica Syifa Az Zahra
+      <div style="font-size:.7rem; font-weight:400; color:var(--muted); margin-top:1px;">Petugas Rekam Medis</div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Menu Utama</div>
+      <a class="sidebar-item" href="#"><span class="icon">📊</span> Dashboard</a>
+      <a class="sidebar-item active" href="#"><span class="icon">📋</span> Validasi Klaim</a>
+      <a class="sidebar-item" href="#"><span class="icon">💰</span> Daftar Tarif</a>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Rekam Medis</div>
+      <a class="sidebar-item active" href="#"><span class="icon">✅</span> Validasi Berkas</a>
+      <a class="sidebar-item" href="#"><span class="icon">📁</span> Daftar Pasien</a>
+      <a class="sidebar-item" href="#"><span class="icon">📈</span> Laporan</a>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Sistem</div>
+      <a class="sidebar-item" href="#"><span class="icon">⚙️</span> Pengaturan</a>
+      <a class="sidebar-item" href="#"><span class="icon">❓</span> Bantuan</a>
+    </div>
+  </aside>
+
+  <main class="content">
+
+    <div class="breadcrumb">
+      <a href="#">Dashboard</a>
+      <span class="breadcrumb-sep">›</span>
+      <a href="#">Validasi Klaim</a>
+      <span class="breadcrumb-sep">›</span>
+      <span>Validasi Berkas Rekam Medis</span>
+    </div>
+
+    <div class="page-header">
+      <div>
+        <div class="page-title">Validasi Berkas Rekam Medis</div>
+        <div class="page-sub">Upload dan validasi kelengkapan berkas rekam medis pasien — dengan analisis isi dokumen oleh AI</div>
+      </div>
+      <div class="ai-badge"><div class="ai-badge-dot"></div>✨ AI Content Analysis</div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row fade">
+      <div class="stat-card">
+        <div class="stat-card-top"><span class="stat-card-label">Total Berkas</span><span class="stat-card-icon">📋</span></div>
+        <div class="stat-card-val" id="stat-total">5</div>
+        <div class="stat-card-sub">Jenis berkas wajib</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-card-top"><span class="stat-card-label">Berkas Lengkap</span><span class="stat-card-icon">✅</span></div>
+        <div class="stat-card-val" id="stat-lengkap">0</div>
+        <div class="stat-card-sub">Sudah diupload & valid</div>
+      </div>
+      <div class="stat-card yellow">
+        <div class="stat-card-top"><span class="stat-card-label">Tidak Lengkap</span><span class="stat-card-icon">⚠️</span></div>
+        <div class="stat-card-val" id="stat-kurang">0</div>
+        <div class="stat-card-sub">Ada tapi ada kolom kosong</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-card-top"><span class="stat-card-label">Tidak Ada</span><span class="stat-card-icon">❌</span></div>
+        <div class="stat-card-val" id="stat-tidakAda">5</div>
+        <div class="stat-card-sub">Belum diupload</div>
+      </div>
+    </div>
+
+    <!-- API Key Panel -->
+    <div class="apikey-panel fade">
+      <div class="apikey-icon">🔑</div>
+      <div class="apikey-info">
+        <div class="apikey-title">Anthropic API Key — untuk Analisis Isi Dokumen AI</div>
+        <div class="apikey-desc">Masukkan API key agar sistem dapat membaca dan menganalisis isi kolom dalam setiap PDF secara otomatis</div>
+      </div>
+      <div class="apikey-input-wrap">
+        <input type="password" class="apikey-input" id="apiKeyInput" placeholder="sk-ant-api03-..." oninput="onApiKeyChange()"/>
+        <span class="apikey-status" id="apiKeyStatus" style="display:none"></span>
+      </div>
+    </div>
+
+    <!-- Upload Panel -->
+    <div class="panel fade">
+      <div class="panel-header">
+        <span>📂</span>
+        <span class="panel-header-title">Upload Berkas PDF</span>
+        <div class="panel-header-right">
+          <span style="font-size:.72rem;color:var(--muted)">Bisa upload banyak file sekaligus</span>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" id="fileInput" accept=".pdf" multiple />
+          <div class="upload-icon">📁</div>
+          <div class="upload-title">Drag & Drop atau Klik untuk Memilih File</div>
+          <div class="upload-hint">Pilih <strong>semua file PDF sekaligus</strong> — sistem otomatis mencocokkan ke jenis berkas yang sesuai</div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <span class="form-label">No. Rekam Medis</span>
+            <input type="text" id="noRM" placeholder="cth. RM-2024-001" style="width:170px"/>
+          </div>
+          <div class="form-group" style="flex:1;min-width:150px">
+            <span class="form-label">Nama Pasien</span>
+            <input type="text" id="namaPasien" placeholder="Nama lengkap pasien"/>
+          </div>
+          <button class="btn btn-ghost" onclick="resetAll()">↺ Reset</button>
+          <button class="btn btn-primary" onclick="validateAll()" id="btnValidate">✓ Validasi</button>
+          <button class="btn btn-ai" onclick="validateWithAI()" id="btnAI" title="Analisis isi dokumen dengan AI">✨ Validasi + Analisis AI</button>
+        </div>
+
+        <div class="progress-row">
+          <span class="progress-label">Kelengkapan Upload</span>
+          <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+          <span class="progress-pct" id="progressPct">0/5</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result Banner -->
+    <div class="result-banner" id="resultBanner">
+      <div class="result-icon" id="resultIcon"></div>
+      <div>
+        <div class="result-title" id="resultTitle"></div>
+        <div class="result-sub"  id="resultSub"></div>
+      </div>
+    </div>
+
+    <!-- Berkas Panel -->
+    <div class="panel fade">
+      <div class="panel-header">
+        <span>📑</span>
+        <span class="panel-header-title">Daftar Berkas Rekam Medis</span>
+        <div class="panel-header-right">
+          <div class="legend">
+            <div class="legend-item"><div class="legend-dot dot-red"></div>Tidak ada</div>
+            <div class="legend-item"><div class="legend-dot dot-yellow"></div>Tidak lengkap</div>
+            <div class="legend-item"><div class="legend-dot dot-green"></div>Lengkap</div>
+            <div class="legend-item"><div class="legend-dot dot-blue"></div>Sedang dianalisis AI</div>
+          </div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="berkas-grid" id="berkasGrid"></div>
+      </div>
+    </div>
+
+    <!-- Rekap Table -->
+    <div class="panel fade" id="tblWrap" style="display:none">
+      <div class="panel-header">
+        <span>📊</span>
+        <span class="panel-header-title">Rekap Hasil Validasi</span>
+      </div>
+      <div class="panel-body-flush">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:46px">#</th>
+              <th>Jenis Berkas</th>
+              <th>Nama File</th>
+              <th style="width:150px">Status</th>
+              <th>Temuan AI</th>
+            </tr>
+          </thead>
+          <tbody id="tblBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+/* ═══════════════════════════════════════
+   DATA
+═══════════════════════════════════════ */
+const BERKAS_LIST = [
+  {
+    id: 'resume',
+    name: 'Resume Medis',
+    desc: 'Ringkasan perjalanan klinis pasien selama perawatan',
+    keywords: ['resume','resume_medis','ringkasan','medical_resume'],
+    checkFields: [
+      'Nama pasien',
+      'Tanggal masuk & keluar',
+      'Diagnosis utama',
+      'Diagnosis sekunder / penyerta',
+      'Tindakan medis / prosedur',
+      'Kondisi keluar (pulang/meninggal/rujuk)',
+      'Tanda tangan dokter',
+    ]
+  },
+  {
+    id: 'lab',
+    name: 'Hasil Lab / Radiologi',
+    desc: 'Hasil pemeriksaan laboratorium dan/atau radiologi',
+    keywords: ['lab','laboratorium','radiologi','radiology','hasil_lab','rontgen','xray','ct','mri'],
+    checkFields: [
+      'Nama pasien & No. RM',
+      'Tanggal pemeriksaan',
+      'Jenis pemeriksaan',
+      'Hasil / nilai pemeriksaan',
+      'Nilai rujukan / normal',
+      'Nama & tanda tangan analis / dokter radiologi',
+    ]
+  },
+  {
+    id: 'operasi',
+    name: 'Lembar Operasi',
+    desc: 'Laporan tindakan operasi / bedah yang dilakukan',
+    keywords: ['operasi','op','bedah','surgery','lembar_operasi','laporan_operasi'],
+    checkFields: [
+      'Nama pasien & No. RM',
+      'Tanggal & jam operasi',
+      'Nama operator / ahli bedah',
+      'Nama anestesiologis',
+      'Jenis anestesi',
+      'Diagnosa pra-operasi',
+      'Diagnosa pasca-operasi',
+      'Prosedur / teknik operasi',
+      'Tanda tangan operator',
+    ]
+  },
+  {
+    id: 'rujukan',
+    name: 'Surat Rujukan',
+    desc: 'Surat rujukan dari fasilitas kesehatan asal',
+    keywords: ['rujukan','referral','surat_rujukan','faskes'],
+    checkFields: [
+      'Nama & alamat faskes pengirim',
+      'Nama pasien & tanggal lahir',
+      'No. BPJS / peserta',
+      'Diagnosa / alasan rujukan',
+      'Faskes tujuan rujukan',
+      'Tanggal surat rujukan',
+      'Tanda tangan & stempel dokter',
+    ]
+  },
+  {
+    id: 'sep',
+    name: 'Surat Eligibilitas Peserta (SEP)',
+    desc: 'Bukti kepesertaan JKN / BPJS dari peserta',
+    keywords: ['sep','eligibilitas','bpjs','jkn','peserta','surat_eligibilitas'],
+    checkFields: [
+      'Nama peserta',
+      'No. kartu BPJS / JKN',
+      'No. SEP',
+      'Tanggal penerbitan SEP',
+      'Poli / unit tujuan',
+      'Diagnosa awal',
+      'Kelas perawatan',
+      'Nama rumah sakit',
+    ]
+  }
+];
+
+let state = {};
+
+function initState() {
+  state = {};
+  BERKAS_LIST.forEach(b => {
+    state[b.id] = { file: null, status: 'none', validated: false, aiResult: null, analyzing: false };
+  });
+}
+
+/* ═══════════════════════════════════════
+   RENDER CARDS
+═══════════════════════════════════════ */
+function renderCards() {
+  const grid = document.getElementById('berkasGrid');
+  grid.innerHTML = '';
+  BERKAS_LIST.forEach((b, i) => {
+    const s = state[b.id];
+
+    let cardCls = '';
+    if (s.analyzing) {
+      cardCls = 'status-analyzing';
+    } else if (s.validated) {
+      cardCls = s.status === 'green' ? 'status-green' : s.status === 'yellow' ? 'status-yellow' : 'status-red';
+    } else if (!s.file) {
+      cardCls = 'status-red';
+    }
+
+    let badge = '✗ Belum Ada';
+    if (s.analyzing) badge = '<span class="spinner"></span>Sedang dianalisis AI…';
+    else if (s.file && !s.validated) badge = '📎 Terupload';
+    else if (s.validated && s.status === 'green')  badge = '✓ Ada & Lengkap';
+    else if (s.validated && s.status === 'yellow') badge = '⚠ Ada, Kolom Tidak Lengkap';
+    else if (s.validated && s.status === 'red')    badge = '✗ Tidak Ada';
+
+    // Build AI result block
+    let aiBlock = '';
+    if (s.aiResult) {
+      const r = s.aiResult;
+      let fieldsHTML = '';
+      if (r.fields && r.fields.length) {
+        r.fields.forEach(f => {
+          const cls = f.status === 'ada' ? 'ok' : f.status === 'kosong' ? 'miss' : 'warn';
+          const icon = f.status === 'ada' ? '✓' : f.status === 'kosong' ? '✗' : '~';
+          fieldsHTML += `<div class="ai-field">
+            <span class="ai-field-name">${esc(f.name)}</span>
+            <span class="ai-field-val ${cls}">${icon} ${esc(f.status)}</span>
+          </div>`;
+        });
+      }
+      aiBlock = `
+        <div class="ai-result show">
+          <div class="ai-result-title">🤖 Hasil Analisis AI</div>
+          ${fieldsHTML}
+          ${r.summary ? `<div class="ai-summary">${esc(r.summary)}</div>` : ''}
+        </div>`;
+    }
+
+    const card = document.createElement('div');
+    card.className = `berkas-card ${cardCls}`;
+    card.dataset.id = b.id;
+    card.addEventListener('dragover', e => { e.preventDefault(); card.classList.add('drop-target'); });
+    card.addEventListener('dragleave', () => card.classList.remove('drop-target'));
+    card.addEventListener('drop', e => { e.preventDefault(); card.classList.remove('drop-target'); dropOnCard(b.id, e.dataTransfer.files); });
+
+    card.innerHTML = `
+      <div class="berkas-row1">
+        <div class="berkas-num">${String(i + 1).padStart(2, '0')}</div>
+        <div class="berkas-info">
+          <div class="berkas-name">${esc(b.name)}</div>
+          <div class="berkas-desc">${esc(b.desc)}</div>
+        </div>
+      </div>
+      <div class="berkas-badge">${badge}</div>
+      <div class="berkas-file ${s.file ? '' : 'empty'}">${s.file ? '📄 ' + esc(s.file.name) : 'Belum ada file diupload'}</div>
+      ${aiBlock}
+    `;
+    grid.appendChild(card);
+  });
+  updateStats();
+  updateProgress();
+}
+
+/* ═══════════════════════════════════════
+   FILE MATCHING & HANDLING
+═══════════════════════════════════════ */
+function matchFile(name) {
+  const n = name.toLowerCase().replace(/[\s\-\.]/g, '_');
+  for (const b of BERKAS_LIST) for (const kw of b.keywords) if (n.includes(kw)) return b.id;
+  return null;
+}
+
+function handleFiles(files) {
+  const unmatched = [];
+  Array.from(files).forEach(f => {
+    if (!f.name.toLowerCase().endsWith('.pdf')) return;
+    const m = matchFile(f.name);
+    if (m) { state[m].file = f; state[m].validated = false; state[m].aiResult = null; }
+    else unmatched.push(f.name);
+  });
+  renderCards();
+  if (unmatched.length) toast(`⚠ ${unmatched.length} file tidak cocok: ${unmatched.slice(0, 2).join(', ')}${unmatched.length > 2 ? '…' : ''}`);
+}
+
+function dropOnCard(id, files) {
+  const pdf = Array.from(files).find(f => f.name.toLowerCase().endsWith('.pdf'));
+  if (pdf) { state[id].file = pdf; state[id].validated = false; state[id].aiResult = null; renderCards(); }
+}
+
+/* ═══════════════════════════════════════
+   VALIDATE (tanpa AI)
+═══════════════════════════════════════ */
+function validateAll() {
+  const noRM = document.getElementById('noRM').value.trim();
+  const nama  = document.getElementById('namaPasien').value.trim();
+  if (!noRM || !nama) { toast('⚠ Isi No. Rekam Medis dan Nama Pasien terlebih dahulu.'); return; }
+
+  let allGreen = true;
+  BERKAS_LIST.forEach(b => {
+    if (state[b.id].file) {
+      state[b.id].validated = true;
+      state[b.id].status    = state[b.id].file.size > 1000 ? 'green' : 'yellow';
+      if (state[b.id].status !== 'green') allGreen = false;
+    } else {
+      state[b.id].validated = true;
+      state[b.id].status    = 'red';
+      allGreen = false;
+    }
+  });
+  renderCards();
+  showResult(allGreen, noRM, nama);
+  renderTable();
+}
+
+/* ═══════════════════════════════════════
+   VALIDATE + AI ANALYSIS
+═══════════════════════════════════════ */
+async function validateWithAI() {
+  const noRM = document.getElementById('noRM').value.trim();
+  const nama  = document.getElementById('namaPasien').value.trim();
+  if (!noRM || !nama) { toast('⚠ Isi No. Rekam Medis dan Nama Pasien terlebih dahulu.'); return; }
+
+  const apiKey = document.getElementById('apiKeyInput').value.trim();
+  if (!apiKey) { toast('⚠ Masukkan Anthropic API Key untuk menggunakan analisis AI.'); return; }
+
+  const filesExist = BERKAS_LIST.some(b => state[b.id].file);
+  if (!filesExist) { toast('⚠ Upload minimal satu file PDF terlebih dahulu.'); return; }
+
+  // Disable buttons
+  document.getElementById('btnValidate').disabled = true;
+  document.getElementById('btnAI').disabled = true;
+
+  // First pass: mark existence
+  BERKAS_LIST.forEach(b => {
+    if (state[b.id].file) {
+      state[b.id].validated = true;
+      state[b.id].status    = 'yellow'; // will be upgraded by AI
+      state[b.id].analyzing = true;
+      state[b.id].aiResult  = null;
+    } else {
+      state[b.id].validated = true;
+      state[b.id].status    = 'red';
+      state[b.id].analyzing = false;
+    }
+  });
+  renderCards();
+
+  // Analyze each uploaded file with AI
+  for (const b of BERKAS_LIST) {
+    const s = state[b.id];
+    if (!s.file) continue;
+
+    try {
+      const base64 = await fileToBase64(s.file);
+      const aiResult = await analyzeWithClaude(apiKey, b, base64);
+      state[b.id].aiResult  = aiResult;
+      state[b.id].analyzing = false;
+
+      // Determine status based on AI result
+      const missingCount = (aiResult.fields || []).filter(f => f.status === 'kosong').length;
+      if (missingCount === 0) {
+        state[b.id].status = 'green';
+      } else if (missingCount <= 2) {
+        state[b.id].status = 'yellow';
+      } else {
+        state[b.id].status = 'yellow'; // still uploaded, just incomplete
+      }
+    } catch (err) {
+      state[b.id].analyzing = false;
+      state[b.id].aiResult  = { fields: [], summary: '⚠ Gagal menganalisis: ' + err.message };
+      state[b.id].status    = 'yellow';
+    }
+    renderCards();
+  }
+
+  const allGreen = BERKAS_LIST.every(b => state[b.id].status === 'green');
+  showResult(allGreen, noRM, nama);
+  renderTable();
+
+  document.getElementById('btnValidate').disabled = false;
+  document.getElementById('btnAI').disabled = false;
+}
+
+/* ═══════════════════════════════════════
+   CLAUDE API CALL
+═══════════════════════════════════════ */
+async function analyzeWithClaude(apiKey, berkas, base64PDF) {
+  const fieldList = berkas.checkFields.map((f, i) => `${i + 1}. ${f}`).join('\n');
+
+  const prompt = `Kamu adalah validator dokumen rekam medis rumah sakit Indonesia yang teliti.
+
+Dokumen yang diberikan adalah: **${berkas.name}** — ${berkas.desc}
+
+Tugasmu: periksa apakah kolom/informasi berikut terisi atau tidak dalam dokumen ini:
+${fieldList}
+
+Untuk setiap kolom, tentukan statusnya:
+- "ada" → kolom terisi dengan informasi yang jelas dan lengkap
+- "kosong" → kolom tidak terisi, dikosongkan, atau berisi tanda "-" / "N/A" tanpa alasan
+- "tidak_jelas" → kolom ada tapi nilainya tidak terbaca, terpotong, atau meragukan
+
+Berikan juga ringkasan singkat (1-2 kalimat) tentang kelengkapan dokumen secara keseluruhan.
+
+Jawab HANYA dalam format JSON berikut (tanpa backtick, tanpa teks lain):
+{
+  "fields": [
+    {"name": "nama kolom", "status": "ada|kosong|tidak_jelas"},
+    ...
+  ],
+  "summary": "Ringkasan singkat kelengkapan dokumen."
+}`;
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'document',
+              source: { type: 'base64', media_type: 'application/pdf', data: base64PDF }
+            },
+            { type: 'text', text: prompt }
+          ]
+        }
+      ]
+    })
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => ({}));
+    throw new Error(errData?.error?.message || `HTTP ${response.status}`);
+  }
+
+  const data = await response.json();
+  const text = data.content.map(c => c.text || '').join('').trim();
+
+  // Parse JSON safely
+  const clean = text.replace(/```json|```/g, '').trim();
+  try {
+    return JSON.parse(clean);
+  } catch {
+    // Try to extract JSON from response
+    const match = clean.match(/\{[\s\S]*\}/);
+    if (match) return JSON.parse(match[0]);
+    throw new Error('Respons AI tidak dapat diparsing sebagai JSON');
+  }
+}
+
+/* ═══════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════ */
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = () => reject(new Error('Gagal membaca file'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function onApiKeyChange() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  const el  = document.getElementById('apiKeyStatus');
+  if (!key) { el.style.display = 'none'; return; }
+  el.style.display = 'inline-block';
+  if (key.startsWith('sk-ant-')) {
+    el.className = 'apikey-status ok';
+    el.textContent = '✓ Format valid';
+  } else {
+    el.className = 'apikey-status err';
+    el.textContent = '✗ Format tidak valid';
+  }
+}
+
+function showResult(ok, noRM, nama) {
+  const el = document.getElementById('resultBanner');
+  el.className = 'result-banner show ' + (ok ? 'lengkap' : 'tdk-lengkap');
+  document.getElementById('resultIcon').textContent  = ok ? '✅' : '❌';
+  document.getElementById('resultTitle').textContent = ok ? 'Dokumen Sudah Lengkap' : 'Dokumen Belum Lengkap';
+  document.getElementById('resultSub').textContent   = `Pasien: ${nama}  ·  No. RM: ${noRM}  ·  ${new Date().toLocaleString('id-ID')}`;
+}
+
+function renderTable() {
+  document.getElementById('tblWrap').style.display = 'block';
+  const body = document.getElementById('tblBody');
+  body.innerHTML = '';
+  BERKAS_LIST.forEach((b, i) => {
+    const s   = state[b.id];
+    const cls = s.status === 'green' ? 'g' : s.status === 'yellow' ? 'y' : 'r';
+    const lbl = s.status === 'green' ? '✓ Lengkap' : s.status === 'yellow' ? '⚠ Tidak Lengkap' : '✗ Tidak Ada';
+
+    // AI issues summary for table
+    let issuesHTML = '';
+    if (s.aiResult && s.aiResult.fields) {
+      const missing = s.aiResult.fields.filter(f => f.status === 'kosong').map(f => f.name);
+      const unclear = s.aiResult.fields.filter(f => f.status === 'tidak_jelas').map(f => f.name);
+      if (missing.length) issuesHTML += `<div class="tbl-issues">✗ Kosong: ${missing.join(', ')}</div>`;
+      if (unclear.length) issuesHTML += `<div class="tbl-issues" style="color:#b7791f">~ Tidak jelas: ${unclear.join(', ')}</div>`;
+      if (!missing.length && !unclear.length) issuesHTML += `<div style="font-size:.7rem;color:#276749">Semua kolom terisi</div>`;
+    } else if (s.validated && s.file) {
+      issuesHTML = `<div style="font-size:.7rem;color:var(--muted);font-style:italic">— (gunakan Validasi AI)</div>`;
+    }
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="font-family:'DM Mono',monospace;color:var(--muted);font-size:.75rem">${String(i + 1).padStart(2, '0')}</td>
+      <td style="font-weight:600">${esc(b.name)}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:.74rem;color:var(--teal)">${s.file ? esc(s.file.name) : '<span style="color:var(--light);font-family:Inter,sans-serif;font-style:italic">—</span>'}</td>
+      <td><span class="tbl-status ${cls}">${lbl}</span></td>
+      <td>${issuesHTML}</td>
+    `;
+    body.appendChild(tr);
+  });
+}
+
+function updateStats() {
+  const total  = BERKAS_LIST.length;
+  const green  = BERKAS_LIST.filter(b => state[b.id].status === 'green').length;
+  const yellow = BERKAS_LIST.filter(b => state[b.id].status === 'yellow').length;
+  const red    = BERKAS_LIST.filter(b => state[b.id].status === 'red' || (!state[b.id].file && !state[b.id].validated)).length;
+  document.getElementById('stat-total').textContent    = total;
+  document.getElementById('stat-lengkap').textContent  = green;
+  document.getElementById('stat-kurang').textContent   = yellow;
+  document.getElementById('stat-tidakAda').textContent = red;
+}
+
+function updateProgress() {
+  const total  = BERKAS_LIST.length;
+  const filled = BERKAS_LIST.filter(b => state[b.id].file).length;
+  document.getElementById('progressFill').style.width = Math.round(filled / total * 100) + '%';
+  document.getElementById('progressPct').textContent  = `${filled}/${total}`;
+}
+
+function resetAll() {
+  initState();
+  ['noRM', 'namaPasien'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fileInput').value = '';
+  document.getElementById('resultBanner').className = 'result-banner';
+  document.getElementById('tblWrap').style.display  = 'none';
+  renderCards();
+}
+
+function toast(msg) {
+  let t = document.getElementById('_toast');
+  if (!t) {
+    t = document.createElement('div'); t.id = '_toast';
+    t.style.cssText = `position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+      background:#1a202c;color:#fff;padding:9px 18px;border-radius:7px;
+      font-size:.8rem;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.2);
+      z-index:9999;max-width:90vw;font-family:Inter,sans-serif;transition:opacity .3s`;
+    document.body.appendChild(t);
+  }
+  t.textContent = msg; t.style.opacity = '1';
+  clearTimeout(t._t); t._t = setTimeout(() => t.style.opacity = '0', 3500);
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ═══════════════════════════════════════
+   EVENTS & INIT
+═══════════════════════════════════════ */
+document.getElementById('fileInput').addEventListener('change', e => handleFiles(e.target.files));
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('drag-over'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag-over'); handleFiles(e.dataTransfer.files); });
+
+initState();
+renderCards();
+</script>
+</body>
+</html>
